@@ -1,1 +1,2 @@
-# devcor_panda_application
+# panda_application
+Sample springboot aplication with using thymeleaf and web spring
