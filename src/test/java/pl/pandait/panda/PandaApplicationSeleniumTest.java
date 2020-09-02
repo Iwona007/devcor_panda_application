@@ -1,6 +1,9 @@
 package pl.pandait.panda;
 
-
+import java.net.URL;
+import java.net.MalformedURLException;
+import org.openqa.selenium.remote.DesiredCapabilities;
+import org.openqa.selenium.remote.RemoteWebDriver;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,17 +27,12 @@ public class PandaApplicationSeleniumTest {
     private int port;
 
     @BeforeEach
-    public void startup() throws InterruptedException {
+    public void startup() throws InterruptedException, MalformedURLException {
 
-        //Driver znajduje się w resource
-        System.setProperty("webdriver.gecko.driver", "src/main/resources/geckodriver");
-        //Ścieżka do Firefoxa - jeżeli nie działa trzeba sprawdzić, gdzie FF jest zainstalowany!
-        System.setProperty("webdriver.firefox.bin", "/usr/lib/firefox/firefox");
-
-        // Tworzymy nową instancję Firefoxa
-        FirefoxOptions options = new FirefoxOptions();
-        options.addArguments("--headless");
-        driver = new FirefoxDriver(options);
+        final FirefoxOptions capabilities = new FirefoxOptions();
+        capabilities.setCapability("marionette", true);
+        driver= new RemoteWebDriver(new URL("http://192.168.44.44:4444/wd/hub"), capabilities);
+    
 
         // Pamiętaj, że aplikacja Spring musi działać! To znaczy też musi być włączona.
         driver.get(String.format("http://192.168.44.44:%d/", port));
@@ -46,20 +44,20 @@ public class PandaApplicationSeleniumTest {
     @Test
     public void greetings_shouldOpenMainPageThenReturnWelcomeText() {
         System.out.println("Uruchamiam test 1: Sprawdzenie napisu na stronie głównej");
-        WebElement greetingElement = driver.findElement(By.xpath("//p"));
-        String greetingText = greetingElement.getText().trim();
+        final WebElement greetingElement = driver.findElement(By.xpath("//p"));
+        final String greetingText = greetingElement.getText().trim();
         assertEquals("Get your greeting here", greetingText);
     }
 
     @Test
     public void greetings_shouldOpenSubpageThenReturnGreetingsText() {
         System.out.println("Uruchamiam test 2: Sprawdzenie napisu na podstronie");
-        WebElement greetingElement = driver.findElement(By.xpath("//p"));
-        WebElement linkToGreetings = greetingElement.findElement(By.xpath("./a"));
+        final WebElement greetingElement = driver.findElement(By.xpath("//p"));
+        final WebElement linkToGreetings = greetingElement.findElement(By.xpath("./a"));
         linkToGreetings.click();
 
-        WebElement helloWorldString = driver.findElement(By.xpath("//p"));
-        String newPageString = helloWorldString.getText().trim();
+        final WebElement helloWorldString = driver.findElement(By.xpath("//p"));
+        final String newPageString = helloWorldString.getText().trim();
         assertEquals("Hello, World!", newPageString);
     }
 
