@@ -1,0 +1,67 @@
+pipeline {
+   agent {
+        label 'Slave'
+    }
+
+    tools {
+        // Install the Maven version configured as "M3" and add it to the path.
+          maven 'auto_maven'
+    }
+    environment {
+    IMAGE = readMavenPom().getArtifactId()
+    VERSION = readMavenPom().getVersion()
+    }
+
+    stages {
+        stage('Clear running apps') {
+            steps {
+               sh 'docker rm -f pandaapp || true'
+            }
+        }
+
+    stages {
+        stage('Get Code') {
+            steps {
+                // Get some code from a GitHub repository
+                git branch: 'selenium/grid', credentialsId: 'GitHub', url: 'https://github.com/Iwona007/devcor_panda_application.git'
+            }
+        }
+        stage('Build and Junit') {
+            steps {
+               sh 'mvn clean install'
+               
+            }
+        }        
+        stage('Build Docker image'){
+            steps {
+               sh 'mvn package -Pdocker'
+            }
+        }
+        stage('Run Docker app') {
+            steps {
+                sh 'docker run -d -p 0.0.0.0:8080:8083 --name pandaapp -t ${IMAGE}:${VERSION}'
+            }
+        }
+
+        stage('Test selenium') {
+            steps {
+               sh 'mvn test -Pselenium'
+               
+            }
+        }
+         stage('Deploy') {
+            steps {
+               configFileProvider([configFile(fileId: 'ffed1617-658a-44b6-8c08-d62252759dc7', variable: 'MAVEN_GLOBAL_SETTINGS')]) {
+                sh 'mvn -gs $MAVEN_GLOBAL_SETTINGS deploy'
+              }
+            }
+        }
+            post {
+                always { 
+                sh 'docker stop pandaapp’
+                deleteDir()
+              }
+           }
+ 
+        }
+    }
